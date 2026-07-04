@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal Planner and Groceries</title>
+  <link rel="stylesheet" href="meals-style.css">
+</head>
+<body>
+  <nav style="margin-bottom:12px;display:flex;gap:8px;font-size:12px;font-weight:600">
+    <a href="index.html" style="color:#f59e0b;text-decoration:none">&#x2190; Home</a>
+    <span style="color:#64748b">|</span>
+    <a href="bills.html" style="color:#64748b;text-decoration:none">Bills</a>
+    <span style="color:#64748b">|</span>
+    <a href="chores.html" style="color:#64748b;text-decoration:none">Chores</a>
+  </nav>
+
+  <div class="header-row">
+    <h1>&#x1F372; Meal Planner</h1>
+    <div class="header-actions">
+      <span id="syncStatus"></span>
+      <button class="sync-btn" id="syncBtn">&#x1F504; Sync</button>
+    </div>
+  </div>
+  <p class="subtitle">Plan meals, build your grocery list, and track what you have. Syncs across devices.</p>
+
+  <!-- Tabs -->
+  <div class="tab-row" id="tabRow">
+    <button class="tab-btn active" data-tab="meals">&#x1F37D;&#xFE0F; Meal Plan</button>
+    <button class="tab-btn" data-tab="groceries">&#x1F6D2; Grocery List</button>
+    <button class="tab-btn" data-tab="pantry">&#x1F3E0; Pantry</button>
+    <button class="tab-btn" data-tab="recipes">&#x1F4D6; Recipes</button>
+  </div>
+
+  <!-- Meal Plan Tab -->
+  <div id="mealsTab" class="tab-content active">
+    <div id="mealWeekNav" class="week-nav"></div>
+    <div id="mealGrid" class="meal-grid"></div>
+    <div id="mealModal" class="modal-overlay">
+      <div class="modal">
+        <h2 id="mealModalTitle">Add Meal</h2>
+        <div class="modal-grid">
+          <div class="span-2">
+            <label for="editMealName">Meal Name</label>
+            <input id="editMealName" type="text" placeholder="e.g. Chicken Stir Fry">
+          </div>
+          <div>
+            <label for="editMealType">Meal Type</label>
+            <select id="editMealType">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack">Snack</option>
+            </select>
+          </div>
+          <div>
+            <label for="editMealCook">Who's Cooking</label>
+            <select id="editMealCook">
+              <option value="Chad">Chad</option>
+              <option value="Eric">Eric</option>
+              <option value="Both">Both</option>
+              <option value="Takeout">Takeout</option>
+            </select>
+          </div>
+          <div class="span-2">
+            <label for="editMealNotes">Notes / Recipe Link</label>
+            <input id="editMealNotes" type="text" placeholder="Instructions or URL...">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="mealModalCancelBtn">Cancel</button>
+          <button class="btn-save" id="mealModalSaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grocery List Tab -->
+  <div id="groceriesTab" class="tab-content">
+    <div class="header-row" style="margin-bottom:12px">
+      <h3 style="font-size:16px;font-weight:700">&#x1F6D2; Shopping List</h3>
+      <div class="header-actions">
+        <button class="add-btn" id="addGroceryBtn">+ Add Item</button>
+        <button class="clear-btn" id="clearCheckedBtn">Clear Checked</button>
+      </div>
+    </div>
+    <div id="grocerySummary" class="summary-row"></div>
+    <div id="groceryList" class="grocery-list"></div>
+    <div id="groceryModal" class="modal-overlay">
+      <div class="modal">
+        <h2 id="groceryModalTitle">Add Grocery Item</h2>
+        <div class="modal-grid">
+          <div class="span-2">
+            <label for="editGroceryName">Item Name</label>
+            <input id="editGroceryName" type="text" placeholder="e.g. Chicken breast">
+          </div>
+          <div>
+            <label for="editGroceryQty">Quantity</label>
+            <input id="editGroceryQty" type="text" placeholder="e.g. 2 lbs">
+          </div>
+          <div>
+            <label for="editGroceryAisle">Category</label>
+            <select id="editGroceryAisle">
+              <option>Produce</option><option>Meat</option><option>Dairy</option>
+              <option>Frozen</option><option>Pantry</option><option>Bakery</option>
+              <option>Beverages</option><option>Snacks</option><option>Condiments</option>
+              <option>Household</option><option>Other</option>
+            </select>
+          </div>
+          <div class="span-2">
+            <label for="editGroceryNotes">Notes</label>
+            <input id="editGroceryNotes" type="text" placeholder="Brand preference, etc.">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="groceryModalCancelBtn">Cancel</button>
+          <button class="btn-save" id="groceryModalSaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pantry Tab -->
+  <div id="pantryTab" class="tab-content">
+    <div class="header-row" style="margin-bottom:12px">
+      <h3 style="font-size:16px;font-weight:700">&#x1F3E0; What We Have</h3>
+      <button class="add-btn" id="addPantryBtn">+ Add Item</button>
+    </div>
+    <div id="pantryList" class="chore-grid"></div>
+    <div id="pantryModal" class="modal-overlay">
+      <div class="modal">
+        <h2 id="pantryModalTitle">Add Pantry Item</h2>
+        <div class="modal-grid">
+          <div class="span-2">
+            <label for="editPantryName">Item Name</label>
+            <input id="editPantryName" type="text" placeholder="e.g. Rice">
+          </div>
+          <div>
+            <label for="editPantryCategory">Category</label>
+            <select id="editPantryCategory">
+              <option>Fridge</option><option>Freezer</option><option>Pantry</option>
+              <option>Spices</option><option>Canned</option><option>Snacks</option><option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="editPantryStatus">Status</label>
+            <select id="editPantryStatus">
+              <option value="full">Full</option>
+              <option value="good">Have Some</option>
+              <option value="low">Running Low</option>
+              <option value="out">Out</option>
+            </select>
+          </div>
+          <div class="span-2">
+            <label for="editPantryNotes">Notes</label>
+            <input id="editPantryNotes" type="text" placeholder="Expiration, brand, etc.">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="pantryModalCancelBtn">Cancel</button>
+          <button class="btn-save" id="pantryModalSaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipes Tab -->
+  <div id="recipesTab" class="tab-content">
+    <div class="header-row" style="margin-bottom:12px">
+      <h3 style="font-size:16px;font-weight:700">&#x1F4D6; Saved Recipes</h3>
+      <button class="add-btn" id="addRecipeBtn">+ Add Recipe</button>
+    </div>
+    <div id="recipeCards" class="chore-grid"></div>
+    <div id="recipeModal" class="modal-overlay">
+      <div class="modal">
+        <h2 id="recipeModalTitle">Add Recipe</h2>
+        <div class="modal-grid">
+          <div class="span-2">
+            <label for="editRecipeName">Recipe Name</label>
+            <input id="editRecipeName" type="text" placeholder="e.g. Garlic Butter Shrimp">
+          </div>
+          <div>
+            <label for="editRecipeCategory">Category</label>
+            <select id="editRecipeCategory">
+              <option>Quick/Easy</option><option>Meal Prep</option><option>Comfort Food</option>
+              <option>Healthy</option><option>Date Night</option><option>Crockpot</option><option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="editRecipeTime">Prep Time (min)</label>
+            <input id="editRecipeTime" type="number" placeholder="30">
+          </div>
+          <div class="span-2">
+            <label for="editRecipeIngredients">Ingredients (one per line)</label>
+            <textarea id="editRecipeIngredients" rows="4" placeholder="2 chicken breasts&#10;1 cup rice&#10;2 tbsp soy sauce" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical"></textarea>
+          </div>
+          <div class="span-2">
+            <label for="editRecipeUrl">Recipe URL</label>
+            <input id="editRecipeUrl" type="url" placeholder="https://...">
+          </div>
+          <div class="span-2">
+            <label for="editRecipeNotes">Notes</label>
+            <input id="editRecipeNotes" type="text" placeholder="Tips, substitutions...">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="recipeModalCancelBtn">Cancel</button>
+          <button class="btn-save" id="recipeModalSaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footer-note">
+    &#x1F512; Synced via cloud &mdash; same data on all devices. <a href="#" id="resetLink">Reset to defaults</a>
+  </p>
+
+  <script src="meals-app.js"></script>
+</body>
+</html>
