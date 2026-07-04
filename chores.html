@@ -23,27 +23,19 @@
   </div>
   <p class="subtitle">Tap cards to see details and mark complete. Tap summary cards to filter. Syncs across devices.</p>
 
-  <!-- Tab Navigation -->
-  <div class="tab-row" id="tabRow">
-    <button class="tab-btn active" data-tab="chores">&#x1F9F9; Chores</button>
-    <button class="tab-btn" data-tab="supplies">&#x1F9F4; Supplies</button>
-  </div>
+  <!-- Chores Section -->
+  <div id="summary" class="summary-row"></div>
+  <div id="insightsPanel" class="insights-panel"></div>
+  <div id="filters"></div>
+  <div id="choreCards" class="chore-grid"></div>
 
-  <!-- Chores Tab -->
-  <div id="choresTab" class="tab-content active">
-    <div id="summary" class="summary-row"></div>
-    <div id="insightsPanel" class="insights-panel"></div>
-    <div id="filters"></div>
-    <div id="choreCards" class="chore-grid"></div>
-  </div>
-
-  <!-- Supplies Tab -->
-  <div id="suppliesTab" class="tab-content">
-    <div id="suppliesSummary" class="summary-row"></div>
+  <!-- Supplies Section -->
+  <div style="margin-top:28px;padding-top:20px;border-top:2px dashed var(--border)">
     <div class="header-row" style="margin-bottom:12px">
-      <h3 style="font-size:16px;font-weight:700">&#x1F9F4; Cleaning Supplies</h3>
+      <h2 style="font-size:20px;font-weight:700;font-family:'Fredoka',sans-serif;background:linear-gradient(135deg,#f59e0b,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent">&#x1F9F4; Supplies</h2>
       <button class="add-btn" id="addSupplyBtn">+ Add Supply</button>
     </div>
+    <div id="suppliesSummary" class="summary-row"></div>
     <div id="supplyCards" class="chore-grid"></div>
   </div>
 
@@ -173,6 +165,7 @@
     </div>
   </div>
 
+  <script src="sparkles.js"></script>
   <script src="chores-app.js"></script>
 </body>
 </html>

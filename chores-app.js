@@ -407,24 +407,6 @@ document.addEventListener('DOMContentLoaded',async function(){
   if(cloudEnabled){const ok=await cloudLoad();if(ok){chores=loadChores();supplies=loadSupplies();}}
   render();renderSupplies();updateSyncStatus(cloudEnabled?'Synced':'Local');
 
-  // Auto-switch to supplies tab if URL has #supplies
-  if(window.location.hash==='#supplies'){
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-    document.querySelector('[data-tab="supplies"]').classList.add('active');
-    document.getElementById('suppliesTab').classList.add('active');
-  }
-
-  // Tabs
-  document.querySelectorAll('.tab-btn').forEach(btn=>{
-    btn.addEventListener('click',function(){
-      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-      this.classList.add('active');
-      document.getElementById(this.dataset.tab+'Tab').classList.add('active');
-    });
-  });
-
   // Chore bindings
   document.getElementById('addChoreBtn').addEventListener('click',openAddModal);
   document.getElementById('modalCancelBtn').addEventListener('click',closeModal);
