@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chore Tracker</title>
+  <link rel="stylesheet" href="chores-style.css">
+</head>
+<body>
+  <nav style="margin-bottom:12px;display:flex;gap:8px;font-size:12px;font-weight:600">
+    <a href="index.html" style="color:#10b981;text-decoration:none">&#x2190; Home</a>
+    <span style="color:#64748b">|</span>
+    <a href="bills.html" style="color:#64748b;text-decoration:none">Bills</a>
+  </nav>
+  <div class="header-row">
+    <h1>&#x1F9F9; Chore Tracker</h1>
+    <div class="header-actions">
+      <span id="syncStatus"></span>
+      <button class="sync-btn" id="syncBtn">&#x1F504; Sync</button>
+      <button class="add-btn" id="addChoreBtn">+ Add Chore</button>
+    </div>
+  </div>
+  <p class="subtitle">Tap cards to see details and mark complete. Tap summary cards to filter. Syncs across devices.</p>
+
+  <!-- Tab Navigation -->
+  <div class="tab-row" id="tabRow">
+    <button class="tab-btn active" data-tab="chores">&#x1F9F9; Chores</button>
+    <button class="tab-btn" data-tab="supplies">&#x1F9F4; Supplies</button>
+  </div>
+
+  <!-- Chores Tab -->
+  <div id="choresTab" class="tab-content active">
+    <div id="summary" class="summary-row"></div>
+    <div id="insightsPanel" class="insights-panel"></div>
+    <div id="filters"></div>
+    <div id="choreCards" class="chore-grid"></div>
+  </div>
+
+  <!-- Supplies Tab -->
+  <div id="suppliesTab" class="tab-content">
+    <div id="suppliesSummary" class="summary-row"></div>
+    <div class="header-row" style="margin-bottom:12px">
+      <h3 style="font-size:16px;font-weight:700">&#x1F9F4; Cleaning Supplies</h3>
+      <button class="add-btn" id="addSupplyBtn">+ Add Supply</button>
+    </div>
+    <div id="supplyCards" class="chore-grid"></div>
+  </div>
+
+  <p class="footer-note">
+    &#x1F512; Synced via cloud &mdash; same data on all devices. <a href="#" id="resetLink">Reset to defaults</a>
+  </p>
+
+  <!-- Edit Modal -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <h2 id="modalTitle">Edit Chore</h2>
+      <div class="modal-grid">
+        <div class="span-2">
+          <label for="editName">Chore Name</label>
+          <input id="editName" type="text" placeholder="e.g. Vacuum living room">
+        </div>
+        <div>
+          <label for="editRoom">Room / Area</label>
+          <select id="editRoom">
+            <option>Kitchen</option><option>Bathroom</option><option>Bedroom</option>
+            <option>Living Room</option><option>Laundry</option><option>Outdoor</option>
+            <option>Garage</option><option>Office</option><option>Whole House</option>
+          </select>
+        </div>
+        <div>
+          <label for="editAssignee">Assigned To</label>
+          <select id="editAssignee">
+            <option value="Chad">Chad</option>
+            <option value="Eric">Eric</option>
+            <option value="Both">Both</option>
+            <option value="Alternate">Alternate</option>
+          </select>
+        </div>
+        <div>
+          <label for="editFrequency">Frequency</label>
+          <select id="editFrequency">
+            <option value="daily">Daily</option>
+            <option value="every-other-day">Every Other Day</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Bi-Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="as-needed">As Needed</option>
+          </select>
+        </div>
+        <div>
+          <label for="editDay">Preferred Day</label>
+          <select id="editDay">
+            <option value="">Any</option>
+            <option value="Mon">Monday</option><option value="Tue">Tuesday</option>
+            <option value="Wed">Wednesday</option><option value="Thu">Thursday</option>
+            <option value="Fri">Friday</option><option value="Sat">Saturday</option>
+            <option value="Sun">Sunday</option>
+          </select>
+        </div>
+        <div>
+          <label for="editPriority">Priority</label>
+          <select id="editPriority">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <div>
+          <label for="editDuration">Est. Duration (min)</label>
+          <input id="editDuration" type="number" min="1" placeholder="15">
+        </div>
+        <div class="span-2">
+          <label for="editNotes">Notes / Instructions</label>
+          <input id="editNotes" type="text" placeholder="Any details...">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="modalCancelBtn">Cancel</button>
+        <button class="btn-save" id="modalSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supply Modal -->
+  <div id="supplyModalOverlay" class="modal-overlay">
+    <div class="modal">
+      <h2 id="supplyModalTitle">Edit Supply</h2>
+      <div class="modal-grid">
+        <div class="span-2">
+          <label for="editSupplyName">Product Name</label>
+          <input id="editSupplyName" type="text" placeholder="e.g. Dish Soap">
+        </div>
+        <div>
+          <label for="editSupplyCategory">Category</label>
+          <select id="editSupplyCategory">
+            <option>All-Purpose</option><option>Kitchen</option><option>Bathroom</option>
+            <option>Laundry</option><option>Floor</option><option>Glass</option>
+            <option>Disinfectant</option><option>Tools</option><option>Paper Goods</option><option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="editSupplyStatus">Stock Level</label>
+          <select id="editSupplyStatus">
+            <option value="full">Full</option>
+            <option value="good">Good</option>
+            <option value="low">Low</option>
+            <option value="out">Out / Need to Order</option>
+          </select>
+        </div>
+        <div>
+          <label for="editSupplyBrand">Brand</label>
+          <input id="editSupplyBrand" type="text" placeholder="e.g. Mrs. Meyer's">
+        </div>
+        <div>
+          <label for="editSupplyStore">Where to Buy</label>
+          <input id="editSupplyStore" type="text" placeholder="e.g. Amazon, Target">
+        </div>
+        <div class="span-2">
+          <label for="editSupplyUrl">Order Link</label>
+          <input id="editSupplyUrl" type="url" placeholder="https://...">
+        </div>
+        <div class="span-2">
+          <label for="editSupplyNotes">Notes</label>
+          <input id="editSupplyNotes" type="text" placeholder="Scent preference, size, etc.">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="supplyModalCancelBtn">Cancel</button>
+        <button class="btn-save" id="supplyModalSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="chores-app.js"></script>
+</body>
+</html>
