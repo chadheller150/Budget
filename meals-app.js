@@ -208,15 +208,18 @@ function openMealModal(date,idx){
   const cookedBtn=document.getElementById('mealCookedBtn');
   const delBtn=document.getElementById('mealDeleteBtn');
   const saveRecBtn=document.getElementById('mealSaveRecipeBtn');
+  const moveBtn=document.getElementById('mealMoveBtn');
   if(existing){
     cookedBtn.style.display='inline-block';
     cookedBtn.textContent=existing.cooked?'\u{21A9}\u{FE0F} Unmark Cooked':'\u{2705} Mark Cooked';
     delBtn.style.display='inline-block';
     saveRecBtn.style.display='inline-block';
+    moveBtn.style.display='inline-block';
   } else {
     cookedBtn.style.display='none';
     delBtn.style.display='none';
     saveRecBtn.style.display='none';
+    moveBtn.style.display='none';
   }
   document.getElementById('mealModal').classList.add('active');
 }
@@ -242,6 +245,19 @@ function toggleMealCooked(){
   if(editingMealIdx===null) return;
   const m=meals[editingMealDate][editingMealIdx];
   m.cooked=!m.cooked;
+  saveMeals(meals);closeMealModal();renderMeals();
+}
+function moveMealToDate(){
+  if(editingMealIdx===null) return;
+  const newDate=prompt('Move to which date? (YYYY-MM-DD)',formatDate(new Date()));
+  if(!newDate||newDate===editingMealDate) return;
+  const meal=meals[editingMealDate][editingMealIdx];
+  // Remove from current date
+  meals[editingMealDate].splice(editingMealIdx,1);
+  if(meals[editingMealDate].length===0) delete meals[editingMealDate];
+  // Add to new date
+  if(!meals[newDate]) meals[newDate]=[];
+  meals[newDate].push(meal);
   saveMeals(meals);closeMealModal();renderMeals();
 }
 function deleteMeal(){
@@ -486,6 +502,7 @@ document.addEventListener('DOMContentLoaded',async function(){
   document.getElementById('mealModalSaveBtn').addEventListener('click',saveMealModal);
   document.getElementById('mealCookedBtn').addEventListener('click',toggleMealCooked);
   document.getElementById('mealDeleteBtn').addEventListener('click',deleteMeal);
+  document.getElementById('mealMoveBtn').addEventListener('click',moveMealToDate);
   document.getElementById('mealSaveRecipeBtn').addEventListener('click',saveAsRecipe);
   document.getElementById('mealModal').addEventListener('click',function(e){if(e.target===e.currentTarget)closeMealModal();});
 
