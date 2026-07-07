@@ -220,14 +220,18 @@ function saveAsRecipe(){
 }
 
 // ============================================================
-// GROCERY LIST — with HEB links
+// GROCERY LIST — with HEB links + cart status
 // ============================================================
 function renderGrocerySummary(){
-  const total=groceries.length;const checked=groceries.filter(g=>g.checked).length;
+  const total=groceries.length;
+  const inCart=groceries.filter(g=>g.inCart).length;
+  const checked=groceries.filter(g=>g.checked).length;
+  const needToFind=total-inCart;
   document.getElementById('grocerySummary').innerHTML=
     '<div class="stat-card"><div class="emoji">\u{1F6D2}</div><div class="value">'+total+'</div><div class="label">Total Items</div></div>'+
+    '<div class="stat-card"><div class="emoji">\u{1F4E6}</div><div class="value">'+inCart+'</div><div class="label">In HEB Cart</div></div>'+
     '<div class="stat-card"><div class="emoji">\u{2705}</div><div class="value">'+checked+'</div><div class="label">Got It</div></div>'+
-    '<div class="stat-card"><div class="emoji">\u{1F4CB}</div><div class="value">'+(total-checked)+'</div><div class="label">Still Need</div></div>';
+    '<div class="stat-card"><div class="emoji">\u{1F50D}</div><div class="value">'+needToFind+'</div><div class="label">Still Need</div></div>';
 }
 
 function renderGroceryList(){
@@ -239,12 +243,15 @@ function renderGroceryList(){
     html+='<div class="grocery-section-title">'+aisle+'</div>';
     items.forEach(item=>{
       const link=hebLink(item.name);
-      html+='<div class="grocery-item'+(item.checked?' checked':'')+'" data-grocery-id="'+item.id+'">'+
+      const cartClass=item.inCart?' in-cart':'';
+      const checkedClass=item.checked?' checked':'';
+      html+='<div class="grocery-item'+checkedClass+cartClass+'" data-grocery-id="'+item.id+'">'+
         '<div class="check-box" data-check-id="'+item.id+'">'+(item.checked?'\u{2713}':'')+'</div>'+
-        '<span class="item-name">'+item.name+'</span>'+
+        '<span class="item-name">'+item.name+(item.inCart&&!item.checked?' <span class="cart-badge">\u{1F4E6} In Cart</span>':'')+'</span>'+
         '<span class="item-qty">'+item.qty+'</span>'+
         '<span class="item-actions">'+
-          '<a href="'+link+'" target="_blank" class="heb-link" title="Find on HEB">\u{1F6D2}</a>'+
+          '<button class="cart-toggle'+(item.inCart?' carted':'')+'" data-cart-id="'+item.id+'" title="'+(item.inCart?'Remove from cart':'Mark added to HEB cart')+'">\u{1F6D2}</button>'+
+          '<a href="'+link+'" target="_blank" class="heb-link" title="Search on HEB.com">\u{1F50D}</a>'+
           '<button data-grocery-edit="'+item.id+'">\u{270F}\u{FE0F}</button>'+
           '<button data-grocery-del="'+item.id+'">\u{2715}</button>'+
         '</span>'+
@@ -253,6 +260,7 @@ function renderGroceryList(){
   });
   document.getElementById('groceryList').innerHTML=html;
   document.querySelectorAll('[data-check-id]').forEach(b=>{b.addEventListener('click',function(e){e.stopPropagation();const id=parseInt(this.dataset.checkId);const idx=groceries.findIndex(g=>g.id===id);groceries[idx].checked=!groceries[idx].checked;saveGroceries(groceries);renderGroceryList();});});
+  document.querySelectorAll('[data-cart-id]').forEach(b=>{b.addEventListener('click',function(e){e.stopPropagation();const id=parseInt(this.dataset.cartId);const idx=groceries.findIndex(g=>g.id===id);groceries[idx].inCart=!groceries[idx].inCart;saveGroceries(groceries);renderGroceryList();});});
   document.querySelectorAll('[data-grocery-edit]').forEach(b=>{b.addEventListener('click',function(e){e.stopPropagation();openGroceryModal(parseInt(this.dataset.groceryEdit));});});
   document.querySelectorAll('[data-grocery-del]').forEach(b=>{b.addEventListener('click',function(e){e.stopPropagation();groceries=groceries.filter(g=>g.id!==parseInt(this.dataset.groceryDel));saveGroceries(groceries);renderGroceryList();});});
 }
