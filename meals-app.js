@@ -88,7 +88,8 @@ function hebLink(item){return HEB_SEARCH_URL+encodeURIComponent(item);}
 // MEAL PLAN
 // ============================================================
 function getMealStats(){
-  // Look at all past dates (before today) to calculate cook vs waste
+  // Count ALL planned meals (past, today, and future) for totals
+  // Only mark as "skipped" if the date has passed and not cooked
   const today=formatDate(new Date());
   let totalPlanned=0, totalCooked=0, totalSkipped=0;
   let weekPlanned=0, weekCooked=0, weekSkipped=0;
@@ -97,22 +98,19 @@ function getMealStats(){
   const weekEnd=formatDate(weekEndD);
 
   Object.keys(meals).forEach(date=>{
-    if(date>=today) return; // Only count past days
     const dayMeals=meals[date]||[];
     dayMeals.forEach(m=>{
       totalPlanned++;
-      if(m.cooked) totalCooked++; else totalSkipped++;
+      if(m.cooked) totalCooked++;
+      else if(date<today) totalSkipped++; // Only count as skipped if day has passed
+
       // This week stats
       if(date>=weekStart&&date<=weekEnd){
         weekPlanned++;
-        if(m.cooked) weekCooked++; else weekSkipped++;
+        if(m.cooked) weekCooked++;
+        else if(date<today) weekSkipped++;
       }
     });
-  });
-  // Also count today's meals that are marked cooked
-  const todayMeals=meals[today]||[];
-  todayMeals.forEach(m=>{
-    if(m.cooked){totalPlanned++;totalCooked++;if(today>=weekStart&&today<=weekEnd){weekPlanned++;weekCooked++;}}
   });
 
   const totalRate=totalPlanned>0?Math.round((totalCooked/totalPlanned)*100):0;
