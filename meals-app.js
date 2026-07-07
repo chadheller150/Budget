@@ -87,6 +87,50 @@ function hebLink(item){return HEB_SEARCH_URL+encodeURIComponent(item);}
 // ============================================================
 // MEAL PLAN
 // ============================================================
+function getMealStats(){
+  // Look at all past dates (before today) to calculate cook vs waste
+  const today=formatDate(new Date());
+  let totalPlanned=0, totalCooked=0, totalSkipped=0;
+  let weekPlanned=0, weekCooked=0, weekSkipped=0;
+  const weekStart=formatDate(currentWeekStart);
+  const weekEndD=new Date(currentWeekStart);weekEndD.setDate(weekEndD.getDate()+6);
+  const weekEnd=formatDate(weekEndD);
+
+  Object.keys(meals).forEach(date=>{
+    if(date>=today) return; // Only count past days
+    const dayMeals=meals[date]||[];
+    dayMeals.forEach(m=>{
+      totalPlanned++;
+      if(m.cooked) totalCooked++; else totalSkipped++;
+      // This week stats
+      if(date>=weekStart&&date<=weekEnd){
+        weekPlanned++;
+        if(m.cooked) weekCooked++; else weekSkipped++;
+      }
+    });
+  });
+  // Also count today's meals that are marked cooked
+  const todayMeals=meals[today]||[];
+  todayMeals.forEach(m=>{
+    if(m.cooked){totalPlanned++;totalCooked++;if(today>=weekStart&&today<=weekEnd){weekPlanned++;weekCooked++;}}
+  });
+
+  const totalRate=totalPlanned>0?Math.round((totalCooked/totalPlanned)*100):0;
+  const weekRate=weekPlanned>0?Math.round((weekCooked/weekPlanned)*100):0;
+  return {totalPlanned,totalCooked,totalSkipped,totalRate,weekPlanned,weekCooked,weekSkipped,weekRate};
+}
+
+function renderMealStats(){
+  const s=getMealStats();
+  const rateColor=s.totalRate>=75?'good':s.totalRate>=50?'':'warn';
+  let html='<div class="insights-panel" style="margin-bottom:16px">';
+  html+='<div class="insight-card insight-'+(s.weekRate>=75?'good':s.weekRate>=50?'info':'warn')+'"><div class="insight-title">\u{1F373} This Week</div><div class="insight-value">'+s.weekCooked+' cooked / '+s.weekPlanned+' planned'+(s.weekPlanned>0?' ('+s.weekRate+'%)':'')+'</div>'+(s.weekSkipped>0?'<div style="font-size:11px;color:var(--text-secondary);margin-top:3px">\u{1F5D1}\u{FE0F} '+s.weekSkipped+' skipped/wasted</div>':'')+'</div>';
+  html+='<div class="insight-card insight-'+(s.totalRate>=75?'good':s.totalRate>=50?'info':'warn')+'"><div class="insight-title">\u{1F4CA} All Time</div><div class="insight-value">'+s.totalCooked+' cooked / '+s.totalPlanned+' planned'+(s.totalPlanned>0?' ('+s.totalRate+'% cook rate)':'')+'</div>'+(s.totalSkipped>0?'<div style="font-size:11px;color:var(--text-secondary);margin-top:3px">\u{1F5D1}\u{FE0F} '+s.totalSkipped+' meals skipped = potential waste</div>':'')+'</div>';
+  if(s.totalPlanned===0) html+='<div class="insight-card insight-info"><div class="insight-title">\u{1F4A1} Tip</div><div class="insight-value">Plan meals and mark them cooked to start tracking your cook rate vs waste!</div></div>';
+  html+='</div>';
+  document.getElementById('mealStats').innerHTML=html;
+}
+
 function renderWeekNav(){
   const end=new Date(currentWeekStart);end.setDate(end.getDate()+6);
   document.getElementById('mealWeekNav').innerHTML=
@@ -96,6 +140,7 @@ function renderWeekNav(){
 }
 
 function renderMeals(){
+  renderMealStats();
   renderWeekNav();
   const today=formatDate(new Date());
   let html='';
