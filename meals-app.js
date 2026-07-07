@@ -1,9 +1,12 @@
 // ============================================================
-// MEAL PLANNER + GROCERY LIST + PANTRY + RECIPES
+// MEAL PLANNER v2 — Delete/cooked meals, reorder, ingredients,
+// save-to-recipe, HEB grocery links, recipe management
 // ============================================================
 const JSONBIN_ID = '6a465cd8da38895dfe2240b7';
 const JSONBIN_KEY = '$2a$10$mwPdOYfA/eT386ORY/YvhOFBhGT2LlLt51.cfjB1gjidZ2sHpEN0K';
 const STORAGE_PREFIX = 'meals_';
+const HEB_STORE_ID = '449'; // Round Rock - 1700 E Palm Valley Blvd
+const HEB_SEARCH_URL = 'https://www.heb.com/search/?q=';
 let cloudEnabled = JSONBIN_ID && JSONBIN_KEY;
 let storageAvailable = true;
 try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); } catch(e) { storageAvailable = false; }
@@ -11,8 +14,7 @@ try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); } catch(e) 
 function ls(k,v) { if(!storageAvailable) return v===undefined?null:undefined; if(v===undefined) return localStorage.getItem(STORAGE_PREFIX+k); localStorage.setItem(STORAGE_PREFIX+k, typeof v==='string'?v:JSON.stringify(v)); }
 function lsDel(k) { if(storageAvailable) localStorage.removeItem(STORAGE_PREFIX+k); }
 
-// DATA
-function loadMeals(){const s=ls('plan'); return s?JSON.parse(s):{};}  // keyed by 'YYYY-MM-DD', value is array of meal objects
+function loadMeals(){const s=ls('plan'); return s?JSON.parse(s):{};}
 function saveMeals(d){ls('plan',d); debouncedCloudSave();}
 function loadGroceries(){const s=ls('groceries'); return s?JSON.parse(s):DEFAULT_GROCERIES;}
 function saveGroceries(d){ls('groceries',d); debouncedCloudSave();}
@@ -46,9 +48,9 @@ const DEFAULT_PANTRY = [
 ];
 
 const DEFAULT_RECIPES = [
-  {id:1,name:"Chicken Stir Fry",category:"Quick/Easy",time:25,ingredients:"2 chicken breasts\n2 cups mixed veggies\n3 tbsp soy sauce\n1 tbsp sesame oil\nRice",url:"",notes:"Serve over rice"},
-  {id:2,name:"Spaghetti Bolognese",category:"Comfort Food",time:35,ingredients:"1 lb ground beef\n1 jar tomato sauce\nSpaghetti\nGarlic\nOnion\nParmesan",url:"",notes:"Simmer sauce 20 min"},
-  {id:3,name:"Sheet Pan Fajitas",category:"Quick/Easy",time:30,ingredients:"2 chicken breasts sliced\n3 bell peppers\n1 onion\nFajita seasoning\nTortillas\nSour cream",url:"",notes:"425F for 20 min"},
+  {id:1,name:"Chicken Stir Fry",category:"Quick/Easy",time:25,ingredients:"2 chicken breasts\n2 cups mixed veggies\n3 tbsp soy sauce\n1 tbsp sesame oil\nRice",instructions:"1. Cut chicken into strips\n2. Stir fry chicken 5 min\n3. Add veggies, cook 4 min\n4. Add soy sauce and sesame oil\n5. Serve over rice",url:"",notes:""},
+  {id:2,name:"Spaghetti Bolognese",category:"Comfort Food",time:35,ingredients:"1 lb ground beef\n1 jar tomato sauce\nSpaghetti\n3 cloves garlic\n1 onion\nParmesan",instructions:"1. Brown beef with garlic and onion\n2. Add sauce, simmer 20 min\n3. Boil pasta\n4. Top with parmesan",url:"",notes:""},
+  {id:3,name:"Sheet Pan Fajitas",category:"Quick/Easy",time:30,ingredients:"2 chicken breasts sliced\n3 bell peppers\n1 onion\nFajita seasoning\nTortillas\nSour cream",instructions:"1. Slice chicken and veggies\n2. Toss with seasoning and oil\n3. Spread on sheet pan\n4. Bake 425F for 20 min\n5. Serve in tortillas",url:"",notes:""},
 ];
 
 let meals=loadMeals(), groceries=loadGroceries(), pantry=loadPantry(), recipes=loadRecipes();
@@ -78,9 +80,9 @@ function debouncedCloudSave(){if(saveTimeout)clearTimeout(saveTimeout);saveTimeo
 // HELPERS
 function getMonday(d){const day=d.getDay();const diff=d.getDate()-day+(day===0?-6:1);return new Date(d.getFullYear(),d.getMonth(),diff);}
 function formatDate(d){return d.toISOString().split('T')[0];}
-function getDayName(d){return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];}
 function getDayShort(d){return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
 const MEAL_EMOJI={breakfast:'\u{1F95E}',lunch:'\u{1F96A}',dinner:'\u{1F372}',snack:'\u{1F34E}'};
+function hebLink(item){return HEB_SEARCH_URL+encodeURIComponent(item);}
 
 // ============================================================
 // MEAL PLAN
@@ -103,12 +105,49 @@ function renderMeals(){
     const isToday=key===today;
     const dayMeals=meals[key]||[];
     html+='<div class="day-card"><div class="day-header'+(isToday?' today':'')+'">'+getDayShort(d)+'</div>';
-    dayMeals.forEach((m,idx)=>{html+='<div class="meal-item" data-meal-date="'+key+'" data-meal-idx="'+idx+'"><div class="meal-type">'+(MEAL_EMOJI[m.type]||'')+' '+m.type+'</div><div class="meal-name">'+m.name+'</div></div>';});
+    dayMeals.forEach((m,idx)=>{
+      const cookedClass=m.cooked?' meal-cooked':'';
+      html+='<div class="meal-item'+cookedClass+'" data-meal-date="'+key+'" data-meal-idx="'+idx+'">'+
+        '<div class="meal-type">'+(MEAL_EMOJI[m.type]||'')+' '+m.type+(m.cooked?' \u{2705}':'')+'</div>'+
+        '<div class="meal-name">'+m.name+'</div>'+
+        '<div class="meal-actions">'+
+          (idx>0?'<span class="meal-move" data-move-date="'+key+'" data-move-idx="'+idx+'" data-move-dir="up">\u{2191}</span>':'')+
+          (idx<dayMeals.length-1?'<span class="meal-move" data-move-date="'+key+'" data-move-idx="'+idx+'" data-move-dir="down">\u{2193}</span>':'')+
+          '<span class="meal-del" data-del-date="'+key+'" data-del-idx="'+idx+'">\u{2715}</span>'+
+        '</div>'+
+      '</div>';
+    });
     html+='<div class="add-meal-btn" data-add-date="'+key+'">+ Add</div></div>';
   }
   document.getElementById('mealGrid').innerHTML=html;
+
+  // Bind events
   document.querySelectorAll('[data-add-date]').forEach(btn=>{btn.addEventListener('click',function(){openMealModal(this.dataset.addDate,null);});});
-  document.querySelectorAll('[data-meal-date]').forEach(item=>{item.addEventListener('click',function(){openMealModal(this.dataset.mealDate,parseInt(this.dataset.mealIdx));});});
+  document.querySelectorAll('.meal-item[data-meal-date]').forEach(item=>{
+    item.addEventListener('click',function(e){
+      if(e.target.closest('.meal-move')||e.target.closest('.meal-del')) return;
+      openMealModal(this.dataset.mealDate,parseInt(this.dataset.mealIdx));
+    });
+  });
+  document.querySelectorAll('.meal-move').forEach(btn=>{
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      const date=this.dataset.moveDate, idx=parseInt(this.dataset.moveIdx), dir=this.dataset.moveDir;
+      const arr=meals[date];
+      const swapIdx=dir==='up'?idx-1:idx+1;
+      [arr[idx],arr[swapIdx]]=[arr[swapIdx],arr[idx]];
+      saveMeals(meals);renderMeals();
+    });
+  });
+  document.querySelectorAll('.meal-del').forEach(btn=>{
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      const date=this.dataset.delDate, idx=parseInt(this.dataset.delIdx);
+      meals[date].splice(idx,1);
+      if(meals[date].length===0) delete meals[date];
+      saveMeals(meals);renderMeals();
+    });
+  });
 }
 
 let editingMealDate=null,editingMealIdx=null;
@@ -119,7 +158,23 @@ function openMealModal(date,idx){
   document.getElementById('editMealName').value=existing?existing.name:'';
   document.getElementById('editMealType').value=existing?existing.type:'dinner';
   document.getElementById('editMealCook').value=existing?existing.cook:'Chad';
+  document.getElementById('editMealIngredients').value=existing?(existing.ingredients||''):'';
+  document.getElementById('editMealInstructions').value=existing?(existing.instructions||''):'';
   document.getElementById('editMealNotes').value=existing?(existing.notes||''):'';
+  // Show/hide cooked and delete buttons
+  const cookedBtn=document.getElementById('mealCookedBtn');
+  const delBtn=document.getElementById('mealDeleteBtn');
+  const saveRecBtn=document.getElementById('mealSaveRecipeBtn');
+  if(existing){
+    cookedBtn.style.display='inline-block';
+    cookedBtn.textContent=existing.cooked?'\u{21A9}\u{FE0F} Unmark Cooked':'\u{2705} Mark Cooked';
+    delBtn.style.display='inline-block';
+    saveRecBtn.style.display='inline-block';
+  } else {
+    cookedBtn.style.display='none';
+    delBtn.style.display='none';
+    saveRecBtn.style.display='none';
+  }
   document.getElementById('mealModal').classList.add('active');
 }
 function closeMealModal(){document.getElementById('mealModal').classList.remove('active');}
@@ -127,15 +182,45 @@ function saveMealModal(){
   const name=document.getElementById('editMealName').value.trim();if(!name){alert('Name required');return;}
   const type=document.getElementById('editMealType').value;
   const cook=document.getElementById('editMealCook').value;
+  const ingredients=document.getElementById('editMealIngredients').value;
+  const instructions=document.getElementById('editMealInstructions').value;
   const notes=document.getElementById('editMealNotes').value.trim();
   if(!meals[editingMealDate])meals[editingMealDate]=[];
-  if(editingMealIdx!==null){meals[editingMealDate][editingMealIdx]={name,type,cook,notes};}
-  else{meals[editingMealDate].push({name,type,cook,notes});}
+  const mealObj={name,type,cook,ingredients,instructions,notes,cooked:false};
+  if(editingMealIdx!==null){
+    mealObj.cooked=meals[editingMealDate][editingMealIdx].cooked||false;
+    meals[editingMealDate][editingMealIdx]=mealObj;
+  } else {
+    meals[editingMealDate].push(mealObj);
+  }
   saveMeals(meals);closeMealModal();renderMeals();
+}
+function toggleMealCooked(){
+  if(editingMealIdx===null) return;
+  const m=meals[editingMealDate][editingMealIdx];
+  m.cooked=!m.cooked;
+  saveMeals(meals);closeMealModal();renderMeals();
+}
+function deleteMeal(){
+  if(editingMealIdx===null) return;
+  meals[editingMealDate].splice(editingMealIdx,1);
+  if(meals[editingMealDate].length===0) delete meals[editingMealDate];
+  saveMeals(meals);closeMealModal();renderMeals();
+}
+function saveAsRecipe(){
+  if(editingMealIdx===null) return;
+  const m=meals[editingMealDate][editingMealIdx];
+  const cat=prompt('Recipe category? (Quick/Easy, Meal Prep, Comfort Food, Healthy, Date Night, Crockpot, Other)','Quick/Easy');
+  if(cat===null) return;
+  const nid=recipes.length?Math.max(...recipes.map(r=>r.id))+1:1;
+  recipes.push({id:nid,name:m.name,category:cat,time:0,ingredients:m.ingredients||'',instructions:m.instructions||'',url:'',notes:m.notes||''});
+  saveRecipes(recipes);
+  alert(m.name+' saved to recipes!');
+  renderRecipes();
 }
 
 // ============================================================
-// GROCERY LIST
+// GROCERY LIST — with HEB links
 // ============================================================
 function renderGrocerySummary(){
   const total=groceries.length;const checked=groceries.filter(g=>g.checked).length;
@@ -153,11 +238,16 @@ function renderGroceryList(){
     const items=groceries.filter(g=>g.aisle===aisle);
     html+='<div class="grocery-section-title">'+aisle+'</div>';
     items.forEach(item=>{
+      const link=hebLink(item.name);
       html+='<div class="grocery-item'+(item.checked?' checked':'')+'" data-grocery-id="'+item.id+'">'+
         '<div class="check-box" data-check-id="'+item.id+'">'+(item.checked?'\u{2713}':'')+'</div>'+
         '<span class="item-name">'+item.name+'</span>'+
         '<span class="item-qty">'+item.qty+'</span>'+
-        '<span class="item-actions"><button data-grocery-edit="'+item.id+'">\u{270F}\u{FE0F}</button><button data-grocery-del="'+item.id+'">\u{2715}</button></span>'+
+        '<span class="item-actions">'+
+          '<a href="'+link+'" target="_blank" class="heb-link" title="Find on HEB">\u{1F6D2}</a>'+
+          '<button data-grocery-edit="'+item.id+'">\u{270F}\u{FE0F}</button>'+
+          '<button data-grocery-del="'+item.id+'">\u{2715}</button>'+
+        '</span>'+
       '</div>';
     });
   });
@@ -235,36 +325,70 @@ function savePantryModal(){
 }
 
 // ============================================================
-// RECIPES
+// RECIPES — grouped by category, reorderable, deletable
 // ============================================================
 function renderRecipes(){
-  const cards=recipes.map(r=>{
-    const ingList=(r.ingredients||'').split('\n').filter(i=>i.trim()).slice(0,4);
-    return '<div class="recipe-card" data-recipe-id="'+r.id+'">'+
-      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
-        '<span style="font-weight:700;font-size:13px;flex:1">\u{1F4D6} '+r.name+'</span>'+
-        '<span class="badge badge-good">'+r.category+'</span>'+
-        (r.time?'<span style="font-size:10px;color:var(--text-secondary)">\u{23F1}\u{FE0F} '+r.time+'min</span>':'')+
-      '</div>'+
-      '<div style="margin-top:4px;font-size:10px;color:var(--text-secondary)">'+ingList.join(' \u{2022} ')+(ingList.length<(r.ingredients||'').split('\n').filter(i=>i.trim()).length?' +more':'')+'</div>'+
-      '<div class="recipe-details">'+
-        '<div class="detail-grid">'+
-          '<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">\u{1F955} Ingredients</div><div class="detail-value" style="white-space:pre-line">'+(r.ingredients||'<span class="detail-empty">None</span>')+'</div></div>'+
-          (r.url?'<div class="detail-item"><div class="detail-label">\u{1F517} Link</div><div class="detail-value"><a href="'+r.url+'" target="_blank" style="color:var(--accent)">Open Recipe</a></div></div>':'')+
-          (r.notes?'<div class="detail-item"><div class="detail-label">\u{1F4DD} Notes</div><div class="detail-value">'+r.notes+'</div></div>':'')+
+  const cats=[...new Set(recipes.map(r=>r.category))].sort();
+  let html='';
+  cats.forEach(cat=>{
+    const catRecipes=recipes.filter(r=>r.category===cat);
+    html+='<div class="recipe-category-title">'+cat+' ('+catRecipes.length+')</div>';
+    catRecipes.forEach((r,localIdx)=>{
+      const globalIdx=recipes.indexOf(r);
+      const ingLines=(r.ingredients||'').split('\n').filter(i=>i.trim());
+      const instrLines=(r.instructions||'').split('\n').filter(i=>i.trim());
+      const ingBullets=ingLines.map(i=>'\u{2022} '+i).join('<br>');
+      const instrSteps=instrLines.map((s,i)=>s).join('<br>');
+
+      html+='<div class="recipe-card" data-recipe-id="'+r.id+'">'+
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+          '<span style="font-weight:700;font-size:13px;flex:1">\u{1F4D6} '+r.name+'</span>'+
+          '<span class="badge badge-good">'+r.category+'</span>'+
+          (r.time?'<span style="font-size:10px;color:var(--text-secondary)">\u{23F1}\u{FE0F} '+r.time+'min</span>':'')+
         '</div>'+
-        '<div class="detail-actions">'+
-          '<button class="btn-edit" data-recipe-edit="'+r.id+'">\u{270F}\u{FE0F} Edit</button>'+
-          '<button class="btn-delete" data-recipe-del="'+r.id+'">\u{1F5D1}\u{FE0F}</button>'+
-          '<button class="add-btn" data-recipe-to-plan="'+r.id+'" style="font-size:10px;padding:4px 10px">+ Add to Meal Plan</button>'+
-        '</div>'+
-      '</div></div>';
-  }).join('');
-  document.getElementById('recipeCards').innerHTML=cards;
+        '<div style="margin-top:4px;font-size:10px;color:var(--text-secondary)">'+ingLines.slice(0,3).join(' \u{2022} ')+(ingLines.length>3?' +more':'')+'</div>'+
+        '<div class="recipe-details">'+
+          '<div class="detail-grid">'+
+            '<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">\u{1F955} Ingredients</div><div class="detail-value">'+
+              (ingBullets||'<span class="detail-empty">None</span>')+'</div></div>'+
+            (instrSteps?'<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">\u{1F4DD} Instructions</div><div class="detail-value">'+instrSteps+'</div></div>':'')+
+            (r.url?'<div class="detail-item"><div class="detail-label">\u{1F517} Link</div><div class="detail-value"><a href="'+r.url+'" target="_blank" style="color:var(--accent)">Open Recipe</a></div></div>':'')+
+            (r.notes?'<div class="detail-item"><div class="detail-label">\u{1F4AC} Notes</div><div class="detail-value">'+r.notes+'</div></div>':'')+
+          '</div>'+
+          '<div class="detail-actions">'+
+            '<button class="add-btn" data-recipe-to-plan="'+r.id+'" style="font-size:10px;padding:4px 10px">+ Meal Plan</button>'+
+            '<button class="btn-edit" data-recipe-edit="'+r.id+'">\u{270F}\u{FE0F}</button>'+
+            (globalIdx>0?'<button class="btn-move" data-recipe-move-id="'+r.id+'" data-recipe-move-dir="up">\u{2191}</button>':'')+
+            (globalIdx<recipes.length-1?'<button class="btn-move" data-recipe-move-id="'+r.id+'" data-recipe-move-dir="down">\u{2193}</button>':'')+
+            '<button class="btn-delete" data-recipe-del="'+r.id+'">\u{1F5D1}\u{FE0F}</button>'+
+          '</div>'+
+        '</div></div>';
+    });
+  });
+  if(recipes.length===0) html='<p style="color:var(--text-secondary);text-align:center;padding:20px">No recipes saved yet. Add one or save from a meal!</p>';
+  document.getElementById('recipeCards').innerHTML=html;
+
   document.querySelectorAll('.recipe-card').forEach(c=>{c.addEventListener('click',function(e){if(e.target.closest('.detail-actions'))return;this.classList.toggle('expanded');});});
   document.querySelectorAll('[data-recipe-edit]').forEach(b=>{b.addEventListener('click',function(e){e.stopPropagation();openRecipeModal(parseInt(this.dataset.recipeEdit));});});
-  document.querySelectorAll('[data-recipe-del]').forEach(b=>{b.addEventListener('click',function(e){e.stopPropagation();recipes=recipes.filter(r=>r.id!==parseInt(this.dataset.recipeDel));saveRecipes(recipes);renderRecipes();});});
-  document.querySelectorAll('[data-recipe-to-plan]').forEach(b=>{b.addEventListener('click',function(e){e.stopPropagation();const r=recipes.find(x=>x.id===parseInt(this.dataset.recipeToPlan));const date=formatDate(new Date());if(!meals[date])meals[date]=[];meals[date].push({name:r.name,type:'dinner',cook:'Both',notes:r.url||''});saveMeals(meals);alert(r.name+' added to today!');});});
+  document.querySelectorAll('[data-recipe-del]').forEach(b=>{b.addEventListener('click',function(e){e.stopPropagation();if(confirm('Delete this recipe?')){recipes=recipes.filter(r=>r.id!==parseInt(this.dataset.recipeDel));saveRecipes(recipes);renderRecipes();}});});
+  document.querySelectorAll('[data-recipe-move-id]').forEach(b=>{b.addEventListener('click',function(e){
+    e.stopPropagation();
+    const id=parseInt(this.dataset.recipeMoveId);const dir=this.dataset.recipeMoveDir;
+    const idx=recipes.findIndex(r=>r.id===id);
+    const swapIdx=dir==='up'?idx-1:idx+1;
+    if(swapIdx<0||swapIdx>=recipes.length) return;
+    [recipes[idx],recipes[swapIdx]]=[recipes[swapIdx],recipes[idx]];
+    saveRecipes(recipes);renderRecipes();
+  });});
+  document.querySelectorAll('[data-recipe-to-plan]').forEach(b=>{b.addEventListener('click',function(e){
+    e.stopPropagation();
+    const r=recipes.find(x=>x.id===parseInt(this.dataset.recipeToPlan));
+    const date=prompt('Add to which date? (YYYY-MM-DD)',formatDate(new Date()));
+    if(!date) return;
+    if(!meals[date])meals[date]=[];
+    meals[date].push({name:r.name,type:'dinner',cook:'Both',ingredients:r.ingredients||'',instructions:r.instructions||'',notes:r.notes||'',cooked:false});
+    saveMeals(meals);alert(r.name+' added to '+date);renderMeals();
+  });});
 }
 
 let editingRecipeId=null;
@@ -275,6 +399,7 @@ function openRecipeModal(id){
   document.getElementById('editRecipeCategory').value=r?r.category:'Quick/Easy';
   document.getElementById('editRecipeTime').value=r?(r.time||''):'';
   document.getElementById('editRecipeIngredients').value=r?(r.ingredients||''):'';
+  document.getElementById('editRecipeInstructions').value=r?(r.instructions||''):'';
   document.getElementById('editRecipeUrl').value=r?(r.url||''):'';
   document.getElementById('editRecipeNotes').value=r?(r.notes||''):'';
   document.getElementById('recipeModal').classList.add('active');
@@ -285,10 +410,11 @@ function saveRecipeModal(){
   const category=document.getElementById('editRecipeCategory').value;
   const time=parseInt(document.getElementById('editRecipeTime').value)||0;
   const ingredients=document.getElementById('editRecipeIngredients').value;
+  const instructions=document.getElementById('editRecipeInstructions').value;
   const url=document.getElementById('editRecipeUrl').value.trim();
   const notes=document.getElementById('editRecipeNotes').value.trim();
-  if(editingRecipeId){const idx=recipes.findIndex(r=>r.id===editingRecipeId);recipes[idx]={...recipes[idx],name,category,time,ingredients,url,notes};}
-  else{const nid=recipes.length?Math.max(...recipes.map(r=>r.id))+1:1;recipes.push({id:nid,name,category,time,ingredients,url,notes});}
+  if(editingRecipeId){const idx=recipes.findIndex(r=>r.id===editingRecipeId);recipes[idx]={...recipes[idx],name,category,time,ingredients,instructions,url,notes};}
+  else{const nid=recipes.length?Math.max(...recipes.map(r=>r.id))+1:1;recipes.push({id:nid,name,category,time,ingredients,instructions,url,notes});}
   saveRecipes(recipes);closeRecipeModal();renderRecipes();
 }
 
@@ -307,6 +433,9 @@ document.addEventListener('DOMContentLoaded',async function(){
   // Meal modal
   document.getElementById('mealModalCancelBtn').addEventListener('click',closeMealModal);
   document.getElementById('mealModalSaveBtn').addEventListener('click',saveMealModal);
+  document.getElementById('mealCookedBtn').addEventListener('click',toggleMealCooked);
+  document.getElementById('mealDeleteBtn').addEventListener('click',deleteMeal);
+  document.getElementById('mealSaveRecipeBtn').addEventListener('click',saveAsRecipe);
   document.getElementById('mealModal').addEventListener('click',function(e){if(e.target===e.currentTarget)closeMealModal();});
 
   // Grocery modal
@@ -328,7 +457,7 @@ document.addEventListener('DOMContentLoaded',async function(){
   document.getElementById('recipeModalSaveBtn').addEventListener('click',saveRecipeModal);
   document.getElementById('recipeModal').addEventListener('click',function(e){if(e.target===e.currentTarget)closeRecipeModal();});
 
-  // Sync
+  // Sync + Reset
   document.getElementById('syncBtn').addEventListener('click',async function(){const ok=await cloudLoad();if(ok){meals=loadMeals();groceries=loadGroceries();pantry=loadPantry();recipes=loadRecipes();renderAll();}});
   document.getElementById('resetLink').addEventListener('click',function(e){e.preventDefault();if(!confirm('Reset all meal data?'))return;['plan','groceries','pantry','recipes'].forEach(k=>lsDel(k));meals=loadMeals();groceries=loadGroceries();pantry=loadPantry();recipes=loadRecipes();renderAll();});
 });

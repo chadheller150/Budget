@@ -75,6 +75,32 @@ h1 { font-size: 30px; font-weight: 800; font-family: 'Fredoka', sans-serif; back
 .add-meal-btn { font-size: 10px; color: var(--accent); cursor: pointer; text-align: center; padding: 4px; border-radius: 6px; border: 1px dashed var(--border); margin-top: 4px; }
 .add-meal-btn:hover { background: var(--accent-light); }
 
+/* Meal actions (reorder, delete inline) */
+.meal-actions { display: flex; gap: 4px; margin-top: 2px; }
+.meal-actions .meal-move, .meal-actions .meal-del {
+  font-size: 10px; cursor: pointer; opacity: 0.5; padding: 0 2px; border-radius: 3px;
+}
+.meal-actions .meal-move:hover { opacity: 1; background: var(--accent-light); }
+.meal-actions .meal-del:hover { opacity: 1; color: var(--red); }
+
+/* Cooked meal */
+.meal-cooked { opacity: 0.5; text-decoration: line-through; }
+.meal-cooked .meal-name { text-decoration: line-through; }
+
+/* HEB link in grocery list */
+.heb-link { text-decoration: none; font-size: 14px; padding: 2px; }
+.heb-link:hover { transform: scale(1.2); }
+
+/* Recipe category headers */
+.recipe-category-title {
+  font-size: 14px; font-weight: 800; font-family: 'Fredoka', sans-serif;
+  color: var(--accent); margin-top: 16px; margin-bottom: 8px;
+  padding-bottom: 4px; border-bottom: 2px dashed var(--border);
+}
+
+/* Move buttons */
+.btn-move { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; }
+
 /* Grocery List */
 .grocery-list { display: flex; flex-direction: column; gap: 6px; }
 .grocery-section-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-top: 12px; margin-bottom: 6px; }

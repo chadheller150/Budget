@@ -64,11 +64,23 @@
             </select>
           </div>
           <div class="span-2">
-            <label for="editMealNotes">Notes / Recipe Link</label>
-            <input id="editMealNotes" type="text" placeholder="Instructions or URL...">
+            <label for="editMealIngredients">Ingredients (one per line)</label>
+            <textarea id="editMealIngredients" rows="4" placeholder="2 chicken breasts&#10;1 cup rice&#10;2 tbsp soy sauce" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;font-family:inherit"></textarea>
+          </div>
+          <div class="span-2">
+            <label for="editMealInstructions">Instructions (one step per line)</label>
+            <textarea id="editMealInstructions" rows="4" placeholder="1. Cut chicken&#10;2. Heat pan&#10;3. Cook 5 min" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;font-family:inherit"></textarea>
+          </div>
+          <div class="span-2">
+            <label for="editMealNotes">Notes</label>
+            <input id="editMealNotes" type="text" placeholder="Any extra info...">
           </div>
         </div>
-        <div class="modal-actions">
+        <div class="modal-actions" style="flex-wrap:wrap">
+          <button class="btn-delete" id="mealDeleteBtn" style="display:none">&#x1F5D1;&#xFE0F; Delete</button>
+          <button class="btn-save" id="mealSaveRecipeBtn" style="display:none;background:linear-gradient(135deg,#a78bfa,#7c3aed);font-size:11px;padding:6px 12px">&#x1F4D6; Save as Recipe</button>
+          <button class="btn-save" id="mealCookedBtn" style="display:none;background:linear-gradient(135deg,#34d399,#10b981);font-size:11px;padding:6px 12px">&#x2705; Mark Cooked</button>
+          <div style="flex:1"></div>
           <button class="btn-cancel" id="mealModalCancelBtn">Cancel</button>
           <button class="btn-save" id="mealModalSaveBtn">Save</button>
         </div>
@@ -193,7 +205,11 @@
           </div>
           <div class="span-2">
             <label for="editRecipeIngredients">Ingredients (one per line)</label>
-            <textarea id="editRecipeIngredients" rows="4" placeholder="2 chicken breasts&#10;1 cup rice&#10;2 tbsp soy sauce" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical"></textarea>
+            <textarea id="editRecipeIngredients" rows="4" placeholder="2 chicken breasts&#10;1 cup rice&#10;2 tbsp soy sauce" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;font-family:inherit"></textarea>
+          </div>
+          <div class="span-2">
+            <label for="editRecipeInstructions">Instructions (one step per line)</label>
+            <textarea id="editRecipeInstructions" rows="4" placeholder="1. Heat pan&#10;2. Add ingredients&#10;3. Cook 10 min" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);resize:vertical;font-family:inherit"></textarea>
           </div>
           <div class="span-2">
             <label for="editRecipeUrl">Recipe URL</label>
