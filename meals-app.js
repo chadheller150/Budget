@@ -424,6 +424,7 @@ function renderRecipes(){
           '</div>'+
           '<div class="detail-actions">'+
             '<button class="add-btn" data-recipe-to-plan="'+r.id+'" style="font-size:10px;padding:4px 10px">+ Meal Plan</button>'+
+            '<button class="add-btn" data-recipe-to-grocery="'+r.id+'" style="font-size:10px;padding:4px 10px;background:linear-gradient(135deg,#60a5fa,#3b82f6)">+ Grocery List</button>'+
             '<button class="btn-edit" data-recipe-edit="'+r.id+'">\u{270F}\u{FE0F}</button>'+
             (globalIdx>0?'<button class="btn-move" data-recipe-move-id="'+r.id+'" data-recipe-move-dir="up">\u{2191}</button>':'')+
             (globalIdx<recipes.length-1?'<button class="btn-move" data-recipe-move-id="'+r.id+'" data-recipe-move-dir="down">\u{2193}</button>':'')+
@@ -455,6 +456,26 @@ function renderRecipes(){
     if(!meals[date])meals[date]=[];
     meals[date].push({name:r.name,type:'dinner',cook:'Both',ingredients:r.ingredients||'',instructions:r.instructions||'',notes:r.notes||'',cooked:false});
     saveMeals(meals);alert(r.name+' added to '+date);renderMeals();
+  });});
+  document.querySelectorAll('[data-recipe-to-grocery]').forEach(b=>{b.addEventListener('click',function(e){
+    e.stopPropagation();
+    const r=recipes.find(x=>x.id===parseInt(this.dataset.recipeToGrocery));
+    const ingLines=(r.ingredients||'').split('\n').filter(i=>i.trim());
+    if(ingLines.length===0){alert('No ingredients to add');return;}
+    let added=0;
+    ingLines.forEach(ing=>{
+      const name=ing.trim();
+      // Check if already on list
+      const exists=groceries.find(g=>g.name.toLowerCase()===name.toLowerCase());
+      if(!exists){
+        const nid=groceries.length?Math.max(...groceries.map(g=>g.id))+1:1;
+        groceries.push({id:nid,name:name,qty:'',aisle:'Produce',checked:false,inCart:false,notes:'For: '+r.name});
+        added++;
+      }
+    });
+    saveGroceries(groceries);
+    alert(added+' ingredient'+(added!==1?'s':'')+' added to grocery list'+(ingLines.length-added>0?' ('+((ingLines.length-added))+' already on list)':''));
+    renderGroceryList();
   });});
 }
 
