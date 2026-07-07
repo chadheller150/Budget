@@ -238,8 +238,27 @@ function saveMealModal(){
     meals[editingMealDate][editingMealIdx]=mealObj;
   } else {
     meals[editingMealDate].push(mealObj);
+    // Auto-add ingredients to grocery list for new meals
+    autoAddIngredientsToGrocery(ingredients, name);
   }
-  saveMeals(meals);closeMealModal();renderMeals();
+  saveMeals(meals);closeMealModal();renderMeals();renderGroceryList();
+}
+
+function autoAddIngredientsToGrocery(ingredientsText, mealName){
+  if(!ingredientsText) return;
+  const lines=ingredientsText.split('\n').filter(i=>i.trim());
+  if(lines.length===0) return;
+  let added=0;
+  lines.forEach(ing=>{
+    const itemName=ing.trim();
+    const exists=groceries.find(g=>g.name.toLowerCase()===itemName.toLowerCase());
+    if(!exists){
+      const nid=groceries.length?Math.max(...groceries.map(g=>g.id))+1:1;
+      groceries.push({id:nid,name:itemName,qty:'',aisle:'Produce',checked:false,inCart:false,notes:'For: '+mealName});
+      added++;
+    }
+  });
+  if(added>0) saveGroceries(groceries);
 }
 function toggleMealCooked(){
   if(editingMealIdx===null) return;
