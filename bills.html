@@ -187,7 +187,8 @@
   // PIN LOCK LOGIC
   (function(){
     const PIN_KEY='bill_tracker_pin';
-    const storedPin=localStorage.getItem(PIN_KEY);
+    const DEFAULT_PIN='1221';
+    const storedPin=localStorage.getItem(PIN_KEY)||DEFAULT_PIN;
     const lockEl=document.getElementById('pinLock');
     const mainEl=document.getElementById('mainContent');
     const input=document.getElementById('pinInput');
@@ -195,19 +196,15 @@
     const setupMsg=document.getElementById('pinSetupMsg');
     const submitBtn=document.getElementById('pinSubmit');
 
-    if(!storedPin){
-      setupMsg.style.display='block';
-      submitBtn.textContent='Set PIN';
+    // Always use stored or default pin
+    if(!localStorage.getItem(PIN_KEY)){
+      localStorage.setItem(PIN_KEY, DEFAULT_PIN);
     }
 
     function attempt(){
       const val=input.value.trim();
-      if(!val||val.length<4){errEl.textContent='PIN must be at least 4 digits';errEl.style.display='block';return;}
-      if(!storedPin){
-        // Setting pin for first time
-        localStorage.setItem(PIN_KEY,val);
-        unlock();
-      } else if(val===storedPin){
+      if(!val){errEl.textContent='Enter your PIN';errEl.style.display='block';return;}
+      if(val===storedPin){
         unlock();
       } else {
         errEl.textContent='Incorrect PIN';errEl.style.display='block';
