@@ -9,6 +9,21 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+  <!-- PIN LOCK SCREEN -->
+  <div id="pinLock" style="display:flex;align-items:center;justify-content:center;min-height:100vh;position:fixed;inset:0;z-index:9999;background:var(--bg);background-image:radial-gradient(ellipse at 0% 0%,rgba(232,99,165,0.08) 0%,transparent 50%),radial-gradient(ellipse at 100% 0%,rgba(167,139,250,0.08) 0%,transparent 50%);">
+    <div style="text-align:center;max-width:300px;padding:40px">
+      <div style="font-size:48px;margin-bottom:16px">&#x1F512;</div>
+      <h2 style="font-family:'Fredoka',sans-serif;font-size:22px;margin-bottom:8px;background:linear-gradient(135deg,#e863a5,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Enter PIN</h2>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:20px">Enter your 4-digit PIN to access bills</p>
+      <input id="pinInput" type="password" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;" style="width:100%;text-align:center;font-size:24px;letter-spacing:12px;padding:12px;border:2px solid var(--border);border-radius:12px;background:var(--card-bg);color:var(--text);font-family:'Fredoka',sans-serif">
+      <p id="pinError" style="color:#ef4444;font-size:11px;margin-top:8px;display:none">Incorrect PIN</p>
+      <button id="pinSubmit" style="margin-top:16px;width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#e863a5,#a78bfa);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Quicksand',sans-serif">Unlock</button>
+      <p id="pinSetupMsg" style="font-size:10px;color:var(--text-secondary);margin-top:12px;display:none">First time? Enter a PIN to set it.</p>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT (hidden until unlocked) -->
+  <div id="mainContent" style="display:none">
   <nav style="margin-bottom:12px;display:flex;gap:8px;font-size:12px;font-weight:600">
     <a href="index.html" style="color:var(--accent);text-decoration:none">&#x2190; Home</a>
     <span style="color:var(--text-secondary)">|</span>
@@ -165,8 +180,51 @@
       </div>
     </div>
   </div>
+  </div><!-- end mainContent -->
 
   <script src="sparkles.js"></script>
+  <script>
+  // PIN LOCK LOGIC
+  (function(){
+    const PIN_KEY='bill_tracker_pin';
+    const storedPin=localStorage.getItem(PIN_KEY);
+    const lockEl=document.getElementById('pinLock');
+    const mainEl=document.getElementById('mainContent');
+    const input=document.getElementById('pinInput');
+    const errEl=document.getElementById('pinError');
+    const setupMsg=document.getElementById('pinSetupMsg');
+    const submitBtn=document.getElementById('pinSubmit');
+
+    if(!storedPin){
+      setupMsg.style.display='block';
+      submitBtn.textContent='Set PIN';
+    }
+
+    function attempt(){
+      const val=input.value.trim();
+      if(!val||val.length<4){errEl.textContent='PIN must be at least 4 digits';errEl.style.display='block';return;}
+      if(!storedPin){
+        // Setting pin for first time
+        localStorage.setItem(PIN_KEY,val);
+        unlock();
+      } else if(val===storedPin){
+        unlock();
+      } else {
+        errEl.textContent='Incorrect PIN';errEl.style.display='block';
+        input.value='';input.focus();
+      }
+    }
+
+    function unlock(){
+      lockEl.style.display='none';
+      mainEl.style.display='block';
+    }
+
+    submitBtn.addEventListener('click',attempt);
+    input.addEventListener('keydown',function(e){if(e.key==='Enter')attempt();});
+    input.focus();
+  })();
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
